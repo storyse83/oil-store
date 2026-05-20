@@ -30,7 +30,7 @@
 
     <main class="max-w-5xl mx-auto px-4">
         
-        <!-- 🛠️ 3단 선택 검색창 영역 -->
+        <!-- 3단 선택 검색창 영역 -->
         <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-8">
             <h3 class="text-sm font-bold text-gray-500 mb-4 flex items-center space-x-1">
                 <span>🔍</span> <span>정밀 차종 선택</span>
@@ -39,25 +39,25 @@
                 
                 <!-- 1번 칸: 메이커 -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">1. 제조사 (메이커)</label>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">1. 제조사</label>
                     <select id="brandSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
                         <option value="">제조사 선택</option>
                     </select>
                 </div>
 
-                <!-- 2번 칸: 차종 -->
+                <!-- 2번 칸: 차종 (큰 이름만 추출하도록 로직 보강) -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">2. 차량 모델명 (차종)</label>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">2. 대표 차종</label>
                     <select id="modelSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
                         <option value="">차종 선택</option>
                     </select>
                 </div>
 
-                <!-- 3번 칸: 연식 -->
+                <!-- 3번 칸: 연식 및 엔진 (선택지가 풍성하게 나오도록 통합) -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">3. 제작 연식</label>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">3. 상세 모델 (연식 및 엔진)</label>
                     <select id="yearSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
-                        <option value="">연식 선택</option>
+                        <option value="">모델 선택</option>
                     </select>
                 </div>
 
@@ -191,15 +191,10 @@
 
             </div>
 
-            <div class="bg-gray-100 p-4 rounded-xl text-xs text-gray-500 leading-relaxed shadow-inner">
-                ⚠️ 본 제원 데이터는 제조사 공식 매뉴얼 사양을 기반으로 작성되었습니다. 최근 출시 차량 중 전동식 파워스티어링(MDPS/EPS) 적용 차종은 파워 오일 주입구가 없으므로 정비 시 확인이 필요합니다. 사륜구동 차량의 경우 전륜/후륜 디퍼런셜 기어오일 점도를 필히 교차 검증하십시오.
-            </div>
-
         </div>
     </main>
 
     <script>
-        // ⚠️ 본인의 구글 스프레드시트 ID로 매칭되어 있는지 꼭 확인하세요!
         const SHEET_ID = '1L_pyYD0o4CuCRsD4XY9qYXhSolDRP910ru0sscbEoOc'; 
         const SHEET_TITLE = '시트1';
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TITLE)}`;
@@ -212,6 +207,13 @@
         const resultSection = document.getElementById('resultSection');
         const dbStatus = document.getElementById('dbStatus');
 
+        // 💡 텍스트에서 순수 대표 차종명만 추출하는 지능형 함수
+        function getPureModelName(fullName) {
+            let name = fullName.split('(')[0].trim(); // 괄호 이전 글자만 분리 (예: 아반떼)
+            name = name.split(' ')[0].trim();        // 공백 기준 첫 단어만 추출
+            return name;
+        }
+
         async function loadCloudDatabase() {
             try {
                 const response = await fetch(url);
@@ -221,11 +223,12 @@
                 const jsonData = JSON.parse(text.substring(47, text.length - 2));
                 const rows = jsonData.table.rows;
 
-                masterData = rows.map(row => {
+                masterData = rows.map((row, index) => {
                     if (!row.c) return null;
                     return {
+                        id:          index,
                         brand:       row.c[0] ? (row.c[0].v ?? "").toString().trim() : "",
-                        name:        row.c[1] ? (row.c[1].v ?? "").toString().trim() : "",
+                        fullName:    row.c[1] ? (row.c[1].v ?? "").toString().trim() : "", // 원본 풀네임
                         year:        row.c[2] ? (row.c[2].v ?? "").toString().trim() : "",
                         engine:      row.c[3] ? (row.c[3].v ?? "").toString().trim() : "",
                         oilCap:      row.c[4] ? (row.c[4].v ?? "").toString().trim() : "",
@@ -241,55 +244,47 @@
                     };
                 }).filter(car => car !== null && car.brand !== "제조사" && car.brand !== "");
 
-                dbStatus.innerText = `🟢 동기화 완료 (총 ${masterData.length}대 조건별 인덱싱)`;
+                dbStatus.innerText = `🟢 동기화 완료 (총 ${masterData.length}대 스마트 필터링)`;
                 dbStatus.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm";
                 
                 initBrandDropdown();
 
             } catch (error) {
                 console.error(error);
-                dbStatus.innerText = "🔴 서버 연결 실패 (구글 시트 설정을 확인하세요)";
-                dbStatus.className = "bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full";
+                dbStatus.innerText = "🔴 서버 연결 실패";
             }
         }
 
-        // 1. 제조사 드롭다운 초기화
         function initBrandDropdown() {
             const brands = [...new Set(masterData.map(car => car.brand))].sort();
-            
             brandSelect.innerHTML = '<option value="">제조사 선택</option>';
             brands.forEach(brand => {
                 const opt = document.createElement('option');
-                opt.value = brand;
-                opt.innerText = brand;
+                opt.value = brand; opt.innerText = brand;
                 brandSelect.appendChild(opt);
             });
-            
             brandSelect.disabled = false;
             brandSelect.classList.remove('bg-gray-50');
         }
 
-        // 2. 제조사 선택 시 ➔ 차종 드롭다운 활성화
+        // 제조사 선택시 ➔ 2번 칸에 '아반떼', '쏘나타' 같은 깔끔한 대표명만 그루핑해서 노출
         brandSelect.addEventListener('change', function() {
             const selectedBrand = this.value;
-            
             modelSelect.innerHTML = '<option value="">차종 선택</option>';
-            yearSelect.innerHTML = '<option value="">연식 선택</option>';
-            modelSelect.disabled = true;
-            yearSelect.disabled = true;
-            modelSelect.classList.add('bg-gray-50');
-            yearSelect.classList.add('bg-gray-50');
+            yearSelect.innerHTML = '<option value="">모델 선택</option>';
+            modelSelect.disabled = true; yearSelect.disabled = true;
+            modelSelect.classList.add('bg-gray-50'); yearSelect.classList.add('bg-gray-50');
             resultSection.classList.add('hidden');
 
             if (!selectedBrand) return;
 
             const filteredCars = masterData.filter(car => car.brand === selectedBrand);
-            const models = [...new Set(filteredCars.map(car => car.name))].sort();
+            // 💡 핵심: 복잡한 트림명을 잘라내고 순수 이름만 유니크하게 정렬
+            const pureModels = [...new Set(filteredCars.map(car => getPureModelName(car.fullName)))].sort();
 
-            models.forEach(model => {
+            pureModels.forEach(model => {
                 const opt = document.createElement('option');
-                opt.value = model;
-                opt.innerText = model;
+                opt.value = model; opt.innerText = model;
                 modelSelect.appendChild(opt);
             });
 
@@ -297,25 +292,26 @@
             modelSelect.classList.remove('bg-gray-50');
         });
 
-        // 3. 차종 선택 시 ➔ 연식 드롭다운 활성화
+        // 3. 대표 차종 선택시 ➔ 3번 칸에 관련된 모든 세부 연식 및 엔진 라인업을 리스트업 (풍성해짐!)
         modelSelect.addEventListener('change', function() {
             const selectedBrand = brandSelect.value;
             const selectedModel = this.value;
 
-            yearSelect.innerHTML = '<option value="">연식 선택</option>';
+            yearSelect.innerHTML = '<option value="">모델 선택</option>';
             yearSelect.disabled = true;
             yearSelect.classList.add('bg-gray-50');
             resultSection.classList.add('hidden');
 
             if (!selectedModel) return;
 
-            const filteredYears = masterData.filter(car => car.brand === selectedBrand && car.name === selectedModel);
-            const years = [...new Set(filteredYears.map(car => car.year))].sort();
+            // 해당 브랜드의 대표 차종명을 포함하는 모든 세부 데이터 긁어오기
+            const subModels = masterData.filter(car => car.brand === selectedBrand && getPureModelName(car.fullName) === selectedModel);
 
-            years.forEach(year => {
+            subModels.forEach(car => {
                 const opt = document.createElement('option');
-                opt.value = year;
-                opt.innerText = year;
+                opt.value = car.id; // 고유 ID를 매칭하여 데이터 중복 완전 차단
+                // 화면 표시 예시: [2020~현재] 아반떼 (CN7) 1.6
+                opt.innerText = `[${car.year}] ${car.fullName.replace(/ \(세부트림 \d+\)/g, '')}`; 
                 yearSelect.appendChild(opt);
             });
 
@@ -323,19 +319,16 @@
             yearSelect.classList.remove('bg-gray-50');
         });
 
-        // 4. 연식 최종 선택 시 ➔ 제원 카드 노출
+        // 4. 최종 세부 모델 선택 시 제원 표출
         yearSelect.addEventListener('change', function() {
-            const selectedBrand = brandSelect.value;
-            const selectedModel = modelSelect.value;
-            const selectedYear = this.value;
+            const selectedId = this.value;
 
-            if (!selectedYear) {
+            if (!selectedId) {
                 resultSection.classList.add('hidden');
                 return;
             }
 
-            // 정확히 일치하는 차종 추출
-            const car = masterData.find(car => car.brand === selectedBrand && car.name === selectedModel && car.year === selectedYear);
+            const car = masterData.find(car => car.id == selectedId);
 
             if (car) {
                 showSpecificationDetails(car);
@@ -345,7 +338,7 @@
         function showSpecificationDetails(car) {
             document.getElementById('resBrand').innerText = car.brand || '-';
             document.getElementById('resYear').innerText = car.year || '-';
-            document.getElementById('resVehicleName').innerText = car.name || '-';
+            document.getElementById('resVehicleName').innerText = car.fullName.replace(/ \(세부트림 \d+\)/g, '') || '-';
             document.getElementById('resEngineType').innerText = car.engine || '-';
             document.getElementById('resOilCap').innerText = car.oilCap || '-';
             document.getElementById('resOilVis').innerText = car.oilVis || '-';
