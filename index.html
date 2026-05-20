@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>오일 제원 실시간 검색 시스템</title>
+    <title>국산차 오일류 제원 실시간 검색 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { -webkit-overflow-scrolling: touch; }
@@ -45,10 +45,10 @@
                 <p id="resEngineType" class="text-blue-100 mt-1 text-sm font-medium">엔진 세부 형식</p>
             </div>
 
-            <!-- ⭐ 5단 조화 레이아웃 그리드 (반응형 변형) -->
+            <!-- ⭐ 6단 레이아웃 그리드로 완벽 진화 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 
-                <!-- 엔진오일 -->
+                <!-- 1. 엔진오일 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-amber-600 font-bold mb-3 border-b pb-1">
@@ -57,17 +57,17 @@
                         <div class="space-y-2">
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">순정 규정 용량</span>
-                                <span id="resOilCap" class="text-base font-black text-gray-800">0.0 L</span>
+                                <span id="resOilCap" class="text-base font-black text-gray-800">-</span>
                             </div>
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">추천 점도 및 승인 규격</span>
-                                <span id="resOilVis" class="text-xs font-bold text-gray-600 block leading-relaxed">0W-00</span>
+                                <span id="resOilVis" class="text-xs font-bold text-gray-600 block leading-relaxed">-</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 부동액 -->
+                <!-- 2. 부동액 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-emerald-600 font-bold mb-3 border-b pb-1">
@@ -76,17 +76,17 @@
                         <div class="space-y-2">
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">냉각계통 전체 용량</span>
-                                <span id="resCoolantCap" class="text-base font-black text-gray-800">0.0 L</span>
+                                <span id="resCoolantCap" class="text-base font-black text-gray-800">-</span>
                             </div>
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">추천 순정 규격</span>
-                                <span id="resCoolantType" class="text-xs font-bold text-gray-600 block leading-relaxed">지정 부동액</span>
+                                <span id="resCoolantType" class="text-xs font-bold text-gray-600 block leading-relaxed">-</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 브레이크액 -->
+                <!-- 3. 브레이크액 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-rose-600 font-bold mb-3 border-b pb-1">
@@ -95,17 +95,17 @@
                         <div class="space-y-2">
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">정비 소요 예상 용량</span>
-                                <span id="resBrakeCap" class="text-base font-black text-gray-800">0.0 L</span>
+                                <span id="resBrakeCap" class="text-base font-black text-gray-800">-</span>
                             </div>
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">추천 규격</span>
-                                <span id="resBrakeCapType" class="text-xs font-bold text-gray-600 block">DOT-4 표준 등급</span>
+                                <span class="text-xs font-bold text-gray-600 block">DOT-4 표준 등급</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ⭐ 미션 오일 (변속기) -->
+                <!-- 4. 변속기 오일 (미션) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-indigo-600 font-bold mb-3 border-b pb-1">
@@ -114,17 +114,32 @@
                         <div class="space-y-2">
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">기준 용량</span>
-                                <span id="resTransCap" class="text-base font-black text-gray-800">0.0 L</span>
+                                <span id="resTransCap" class="text-base font-black text-gray-800">-</span>
                             </div>
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">권장 규격 및 변속기 타입</span>
-                                <span id="resTransType" class="text-xs font-bold text-gray-600 block leading-relaxed">자동/수동 규격</span>
+                                <span id="resTransType" class="text-xs font-bold text-gray-600 block leading-relaxed">-</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ⭐ 파워 스티어링 오일 -->
+                <!-- 5. ⭐ 기어오일 (디퍼런셜/수동 독립 카드 생성) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-purple-600 font-bold mb-3 border-b pb-1">
+                            <span class="text-lg">🔩</span> <h4 class="text-sm">데프 · 수동 기어 오일</h4>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-[11px] text-gray-400 block font-medium">디퍼런셜(가베라) 및 수동미션 점도 스펙</span>
+                                <span id="resGearSpec" class="text-xs font-bold text-purple-700 block leading-relaxed">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. 파워 스티어링 오일 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-cyan-600 font-bold mb-3 border-b pb-1">
@@ -133,11 +148,11 @@
                         <div class="space-y-2">
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">소요 용량</span>
-                                <span id="resPowerCap" class="text-base font-black text-gray-800">0.0 L</span>
+                                <span id="resPowerCap" class="text-base font-black text-gray-800">-</span>
                             </div>
                             <div>
                                 <span class="text-[11px] text-gray-400 block font-medium">조향 시스템 유형 및 규격</span>
-                                <span id="resPowerType" class="text-xs font-bold text-gray-600 block leading-relaxed">유압식/MDPS 여부</span>
+                                <span id="resPowerType" class="text-xs font-bold text-gray-600 block leading-relaxed">-</span>
                             </div>
                         </div>
                     </div>
@@ -146,7 +161,7 @@
             </div>
 
             <div class="bg-gray-100 p-4 rounded-xl text-xs text-gray-500 leading-relaxed shadow-inner">
-                ⚠️ 본 제원 데이터는 제조사 공식 매뉴얼 사양을 기반으로 작성되었습니다. 수동 교환, 순환식 정비 기계 사용 유무에 따라 실주입 오일량은 변동될 수 있습니다. 최근 출시 차량 중 전동식 파워스티어링(MDPS/EPS) 적용 차종은 파워 오일 주입구가 없으므로 정비 시 확인이 필요합니다.
+                ⚠️ 본 제원 데이터는 제조사 공식 매뉴얼 사양을 기반으로 작성되었습니다. 최근 출시 차량 중 전동식 파워스티어링(MDPS/EPS) 적용 차종은 파워 오일 주입구가 없으므로 정비 시 확인이 필요합니다. 사륜구동 차량의 경우 전륜/후륜 디퍼런셜 기어오일 점도를 필히 교차 검증하십시오.
             </div>
 
         </div>
@@ -173,30 +188,31 @@
                 const jsonData = JSON.parse(text.substring(47, text.length - 2));
                 const rows = jsonData.table.rows;
 
-                // ⭐ 구글 시트 칸 배치 매칭 확장 (총 11개 칸 순서 제어)
+                // 🛠️ 14개 칸 매칭 순서 완벽 정정 (배열 인덱스 매칭 스왑 완료)
                 domesticVehicles = rows.map(row => {
                     if (!row.c) return null;
                     return {
-                        brand:       row.c[0] ? (row.c[0].v ?? "") : "", // A열
-                        name:        row.c[1] ? (row.c[1].v ?? "") : "", // B열
-                        year:        row.c[2] ? (row.c[2].v ?? "") : "", // C열
-                        engine:      row.c[3] ? (row.c[3].v ?? "") : "", // D열
-                        oilCap:      row.c[4] ? (row.c[4].v ?? "") : "", // E열
-                        oilVis:      row.c[5] ? (row.c[5].v ?? "") : "", // F열
-                        coolantCap:  row.c[6] ? (row.c[6].v ?? "") : "", // G열
-                        coolantType: row.c[7] ? (row.c[7].v ?? "") : "", // H열
-                        brakeCap:    row.c[8] ? (row.c[8].v ?? "") : "", // I열
-                        transCap:    row.c[9] ? (row.c[9].v ?? "") : "", // J열 ⭐추가
-                        transType:   row.c[10] ? (row.c[10].v ?? "") : "", // K열 ⭐추가
-                        powerCap:    row.c[11] ? (row.c[11].v ?? "") : "", // L열 ⭐추가
-                        powerType:   row.c[12] ? (row.c[12].v ?? "") : ""  // M열 ⭐추가
+                        brand:       row.c[0] ? (row.c[0].v ?? "") : "",  // A열: 제조사
+                        name:        row.c[1] ? (row.c[1].v ?? "") : "",  // B열: 차량 모델명
+                        year:        row.c[2] ? (row.c[2].v ?? "") : "",  // C열: 연식
+                        engine:      row.c[3] ? (row.c[3].v ?? "") : "",  // D열: 엔진 세부 제원
+                        oilCap:      row.c[4] ? (row.c[4].v ?? "") : "",  // E열: 엔진오일 용량
+                        oilVis:      row.c[5] ? (row.c[5].v ?? "") : "",  // F열: 순정 점도 / 규격
+                        coolantCap:  row.c[6] ? (row.c[6].v ?? "") : "",  // G열: 부동액 용량
+                        coolantType: row.c[7] ? (row.c[7].v ?? "") : "",  // H열: 추천 부동액 종류
+                        brakeCap:    row.c[8] ? (row.c[8].v ?? "") : "",  // I열: 브레이크액 용량
+                        transCap:    row.c[9] ? (row.c[9].v ?? "") : "",  // J열: 변속기오일 용량
+                        transType:   row.c[10] ? (row.c[10].v ?? "") : "", // K열: 변속기오일 규격
+                        gearSpec:    row.c[11] ? (row.c[11].v ?? "") : "", // L열: ⭐ 기어오일 점도/스펙 (여기로 이동)
+                        powerCap:    row.c[12] ? (row.c[12].v ?? "") : "", // M열: 파워오일 용량 (한 칸씩 뒤로 밀림)
+                        powerType:   row.c[13] ? (row.c[13].v ?? "") : ""  // N열: 파워오일 규격
                     };
                 }).filter(car => car !== null);
 
                 dbStatus.innerText = `🟢 동기화 완료 (총 ${domesticVehicles.length}대 제원 보유)`;
                 dbStatus.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm";
                 searchInput.disabled = false;
-                searchInput.placeholder = "차종명, 브랜드, 엔진을 입력하세요 (예: 아반떼, 쏘렌토)...";
+                searchInput.placeholder = "차종명, 브랜드, 엔진을 입력하세요 (예: 렉스턴, 토레스, 아반떼)...";
                 searchInput.classList.remove('bg-gray-50');
 
             } catch (error) {
@@ -250,7 +266,6 @@
                 });
                 suggestionBox.appendChild(item);
             });
-            searchInput.classList.remove('bg-gray-50');
             suggestionBox.classList.remove('hidden');
         });
 
@@ -264,12 +279,13 @@
             document.getElementById('resCoolantCap').innerText = car.coolantCap || '-';
             document.getElementById('resCoolantType').innerText = car.coolantType || '지정 순정 냉각수';
             document.getElementById('resBrakeCap').innerText = car.brakeCap || '-';
-            
-            // ⭐ 신규 데이터 바인딩 렌더러
             document.getElementById('resTransCap').innerText = car.transCap || '-';
-            document.getElementById('resTransType').innerText = car.transType || '메뉴얼 점검 필요';
+            document.getElementById('resTransType').innerText = car.transType || '-';
+            
+            // 🛠️ 정밀 타격 매칭 스왑 렌더링
+            document.getElementById('resGearSpec').innerText = car.gearSpec || '해당없음 (디퍼런셜 무오일 구조)';
             document.getElementById('resPowerCap').innerText = car.powerCap || '-';
-            document.getElementById('resPowerType').innerText = car.powerType || '전자식 조향 (오일 없음)';
+            document.getElementById('resPowerType').innerText = car.powerType || '전자식 조향 (MDPS/EPS 적용 차종)';
             
             resultSection.classList.remove('hidden');
         }
