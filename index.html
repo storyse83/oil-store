@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>국산차 오일류 제원 실시간 검색 시스템</title>
+    <title>국산차 오일류 제원 조건별 검색 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { -webkit-overflow-scrolling: touch; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%236B7280' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen pb-12">
@@ -25,15 +30,41 @@
 
     <main class="max-w-5xl mx-auto px-4">
         
-        <div class="relative mb-8">
-            <div class="flex items-center bg-white border-2 border-blue-500 rounded-2xl shadow-md overflow-hidden focus-within:ring-4 focus-within:ring-blue-100 transition-all">
-                <span class="pl-4 text-gray-400 text-xl">🔍</span>
-                <input type="text" id="searchInput" placeholder="구글 스프레드시트 로딩 중..." disabled 
-                       class="w-full p-4 text-base sm:text-lg focus:outline-none placeholder-gray-400 font-medium bg-gray-50">
+        <!-- 🛠️ 3단 선택 검색창 영역 -->
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-8">
+            <h3 class="text-sm font-bold text-gray-500 mb-4 flex items-center space-x-1">
+                <span>🔍</span> <span>정밀 차종 선택</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                <!-- 1번 칸: 메이커 -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">1. 제조사 (메이커)</label>
+                    <select id="brandSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
+                        <option value="">제조사 선택</option>
+                    </select>
+                </div>
+
+                <!-- 2번 칸: 차종 -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">2. 차량 모델명 (차종)</label>
+                    <select id="modelSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
+                        <option value="">차종 선택</option>
+                    </select>
+                </div>
+
+                <!-- 3번 칸: 연식 -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 pl-1">3. 제작 연식</label>
+                    <select id="yearSelect" disabled class="w-full p-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-all cursor-pointer">
+                        <option value="">연식 선택</option>
+                    </select>
+                </div>
+
             </div>
-            <div id="suggestionBox" class="absolute w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 hidden max-h-72 overflow-y-auto"></div>
         </div>
 
+        <!-- 결과 출력 구역 -->
         <div id="resultSection" class="hidden space-y-6">
             
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg">
@@ -45,7 +76,7 @@
                 <p id="resEngineType" class="text-blue-100 mt-1 text-sm font-medium">엔진 세부 형식</p>
             </div>
 
-            <!-- ⭐ 6단 레이아웃 그리드로 완벽 진화 -->
+            <!-- 6단 레이아웃 그리드 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 
                 <!-- 1. 엔진오일 -->
@@ -124,7 +155,7 @@
                     </div>
                 </div>
 
-                <!-- 5. ⭐ 기어오일 (디퍼런셜/수동 독립 카드 생성) -->
+                <!-- 5. 기어오일 (디퍼런셜/수동) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
                         <div class="flex items-center space-x-2 text-purple-600 font-bold mb-3 border-b pb-1">
@@ -168,14 +199,16 @@
     </main>
 
     <script>
+        // ⚠️ 본인의 구글 스프레드시트 ID로 매칭되어 있는지 꼭 확인하세요!
         const SHEET_ID = '1L_pyYD0o4CuCRsD4XY9qYXhSolDRP910ru0sscbEoOc'; 
         const SHEET_TITLE = '시트1';
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TITLE)}`;
 
-        let domesticVehicles = [];
+        let masterData = [];
 
-        const searchInput = document.getElementById('searchInput');
-        const suggestionBox = document.getElementById('suggestionBox');
+        const brandSelect = document.getElementById('brandSelect');
+        const modelSelect = document.getElementById('modelSelect');
+        const yearSelect = document.getElementById('yearSelect');
         const resultSection = document.getElementById('resultSection');
         const dbStatus = document.getElementById('dbStatus');
 
@@ -188,32 +221,30 @@
                 const jsonData = JSON.parse(text.substring(47, text.length - 2));
                 const rows = jsonData.table.rows;
 
-                // 🛠️ 14개 칸 매칭 순서 완벽 정정 (배열 인덱스 매칭 스왑 완료)
-                domesticVehicles = rows.map(row => {
+                masterData = rows.map(row => {
                     if (!row.c) return null;
                     return {
-                        brand:       row.c[0] ? (row.c[0].v ?? "") : "",  // A열: 제조사
-                        name:        row.c[1] ? (row.c[1].v ?? "") : "",  // B열: 차량 모델명
-                        year:        row.c[2] ? (row.c[2].v ?? "") : "",  // C열: 연식
-                        engine:      row.c[3] ? (row.c[3].v ?? "") : "",  // D열: 엔진 세부 제원
-                        oilCap:      row.c[4] ? (row.c[4].v ?? "") : "",  // E열: 엔진오일 용량
-                        oilVis:      row.c[5] ? (row.c[5].v ?? "") : "",  // F열: 순정 점도 / 규격
-                        coolantCap:  row.c[6] ? (row.c[6].v ?? "") : "",  // G열: 부동액 용량
-                        coolantType: row.c[7] ? (row.c[7].v ?? "") : "",  // H열: 추천 부동액 종류
-                        brakeCap:    row.c[8] ? (row.c[8].v ?? "") : "",  // I열: 브레이크액 용량
-                        transCap:    row.c[9] ? (row.c[9].v ?? "") : "",  // J열: 변속기오일 용량
-                        transType:   row.c[10] ? (row.c[10].v ?? "") : "", // K열: 변속기오일 규격
-                        gearSpec:    row.c[11] ? (row.c[11].v ?? "") : "", // L열: ⭐ 기어오일 점도/스펙 (여기로 이동)
-                        powerCap:    row.c[12] ? (row.c[12].v ?? "") : "", // M열: 파워오일 용량 (한 칸씩 뒤로 밀림)
-                        powerType:   row.c[13] ? (row.c[13].v ?? "") : ""  // N열: 파워오일 규격
+                        brand:       row.c[0] ? (row.c[0].v ?? "").toString().trim() : "",
+                        name:        row.c[1] ? (row.c[1].v ?? "").toString().trim() : "",
+                        year:        row.c[2] ? (row.c[2].v ?? "").toString().trim() : "",
+                        engine:      row.c[3] ? (row.c[3].v ?? "").toString().trim() : "",
+                        oilCap:      row.c[4] ? (row.c[4].v ?? "").toString().trim() : "",
+                        oilVis:      row.c[5] ? (row.c[5].v ?? "").toString().trim() : "",
+                        coolantCap:  row.c[6] ? (row.c[6].v ?? "").toString().trim() : "",
+                        coolantType: row.c[7] ? (row.c[7].v ?? "").toString().trim() : "",
+                        brakeCap:    row.c[8] ? (row.c[8].v ?? "").toString().trim() : "",
+                        transCap:    row.c[9] ? (row.c[9].v ?? "").toString().trim() : "",
+                        transType:   row.c[10] ? (row.c[10].v ?? "").toString().trim() : "",
+                        gearSpec:    row.c[11] ? (row.c[11].v ?? "").toString().trim() : "",
+                        powerCap:    row.c[12] ? (row.c[12].v ?? "").toString().trim() : "",
+                        powerType:   row.c[13] ? (row.c[13].v ?? "").toString().trim() : ""
                     };
-                }).filter(car => car !== null);
+                }).filter(car => car !== null && car.brand !== "제조사" && car.brand !== "");
 
-                dbStatus.innerText = `🟢 동기화 완료 (총 ${domesticVehicles.length}대 제원 보유)`;
+                dbStatus.innerText = `🟢 동기화 완료 (총 ${masterData.length}대 조건별 인덱싱)`;
                 dbStatus.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm";
-                searchInput.disabled = false;
-                searchInput.placeholder = "차종명, 브랜드, 엔진을 입력하세요 (예: 렉스턴, 토레스, 아반떼)...";
-                searchInput.classList.remove('bg-gray-50');
+                
+                initBrandDropdown();
 
             } catch (error) {
                 console.error(error);
@@ -222,51 +253,93 @@
             }
         }
 
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            suggestionBox.innerHTML = '';
-
-            if (!query) {
-                suggestionBox.classList.add('hidden');
-                return;
-            }
-
-            const filtered = domesticVehicles.filter(car => 
-                (car.name && car.name.toString().toLowerCase().includes(query)) || 
-                (car.engine && car.engine.toString().toLowerCase().includes(query)) ||
-                (car.brand && car.brand.toString().toLowerCase().includes(query)) ||
-                (car.year && car.year.toString().toLowerCase().includes(query))
-            );
-
-            if (filtered.length === 0) {
-                suggestionBox.innerHTML = `<div class="p-4 text-sm text-gray-400 text-center">매칭되는 차종이 없습니다.</div>`;
-                suggestionBox.classList.remove('hidden');
-                return;
-            }
-
-            filtered.forEach(car => {
-                const item = document.createElement('div');
-                item.className = "p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer flex justify-between items-center transition-colors";
-                item.innerHTML = `
-                    <div>
-                        <div class="flex items-center space-x-1.5 mb-1">
-                            <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">${car.brand || '국산'}</span>
-                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${car.year || '연식'}</span>
-                        </div>
-                        <span class="text-base font-bold text-gray-800">${car.name || '차량명'}</span>
-                        <p class="text-xs text-gray-500 mt-1 font-medium">⚡ ${car.engine || ''}</p>
-                    </div>
-                    <span class="text-blue-500 font-bold text-sm">선택 ➔</span>
-                `;
-                
-                item.addEventListener('click', () => {
-                    showSpecificationDetails(car);
-                    searchInput.value = `${car.name} (${car.year})`;
-                    suggestionBox.classList.add('hidden');
-                });
-                suggestionBox.appendChild(item);
+        // 1. 제조사 드롭다운 초기화
+        function initBrandDropdown() {
+            const brands = [...new Set(masterData.map(car => car.brand))].sort();
+            
+            brandSelect.innerHTML = '<option value="">제조사 선택</option>';
+            brands.forEach(brand => {
+                const opt = document.createElement('option');
+                opt.value = brand;
+                opt.innerText = brand;
+                brandSelect.appendChild(opt);
             });
-            suggestionBox.classList.remove('hidden');
+            
+            brandSelect.disabled = false;
+            brandSelect.classList.remove('bg-gray-50');
+        }
+
+        // 2. 제조사 선택 시 ➔ 차종 드롭다운 활성화
+        brandSelect.addEventListener('change', function() {
+            const selectedBrand = this.value;
+            
+            modelSelect.innerHTML = '<option value="">차종 선택</option>';
+            yearSelect.innerHTML = '<option value="">연식 선택</option>';
+            modelSelect.disabled = true;
+            yearSelect.disabled = true;
+            modelSelect.classList.add('bg-gray-50');
+            yearSelect.classList.add('bg-gray-50');
+            resultSection.classList.add('hidden');
+
+            if (!selectedBrand) return;
+
+            const filteredCars = masterData.filter(car => car.brand === selectedBrand);
+            const models = [...new Set(filteredCars.map(car => car.name))].sort();
+
+            models.forEach(model => {
+                const opt = document.createElement('option');
+                opt.value = model;
+                opt.innerText = model;
+                modelSelect.appendChild(opt);
+            });
+
+            modelSelect.disabled = false;
+            modelSelect.classList.remove('bg-gray-50');
+        });
+
+        // 3. 차종 선택 시 ➔ 연식 드롭다운 활성화
+        modelSelect.addEventListener('change', function() {
+            const selectedBrand = brandSelect.value;
+            const selectedModel = this.value;
+
+            yearSelect.innerHTML = '<option value="">연식 선택</option>';
+            yearSelect.disabled = true;
+            yearSelect.classList.add('bg-gray-50');
+            resultSection.classList.add('hidden');
+
+            if (!selectedModel) return;
+
+            const filteredYears = masterData.filter(car => car.brand === selectedBrand && car.name === selectedModel);
+            const years = [...new Set(filteredYears.map(car => car.year))].sort();
+
+            years.forEach(year => {
+                const opt = document.createElement('option');
+                opt.value = year;
+                opt.innerText = year;
+                yearSelect.appendChild(opt);
+            });
+
+            yearSelect.disabled = false;
+            yearSelect.classList.remove('bg-gray-50');
+        });
+
+        // 4. 연식 최종 선택 시 ➔ 제원 카드 노출
+        yearSelect.addEventListener('change', function() {
+            const selectedBrand = brandSelect.value;
+            const selectedModel = modelSelect.value;
+            const selectedYear = this.value;
+
+            if (!selectedYear) {
+                resultSection.classList.add('hidden');
+                return;
+            }
+
+            // 정확히 일치하는 차종 추출
+            const car = masterData.find(car => car.brand === selectedBrand && car.name === selectedModel && car.year === selectedYear);
+
+            if (car) {
+                showSpecificationDetails(car);
+            }
         });
 
         function showSpecificationDetails(car) {
@@ -281,20 +354,12 @@
             document.getElementById('resBrakeCap').innerText = car.brakeCap || '-';
             document.getElementById('resTransCap').innerText = car.transCap || '-';
             document.getElementById('resTransType').innerText = car.transType || '-';
-            
-            // 🛠️ 정밀 타격 매칭 스왑 렌더링
             document.getElementById('resGearSpec').innerText = car.gearSpec || '해당없음 (디퍼런셜 무오일 구조)';
             document.getElementById('resPowerCap').innerText = car.powerCap || '-';
             document.getElementById('resPowerType').innerText = car.powerType || '전자식 조향 (MDPS/EPS 적용 차종)';
             
             resultSection.classList.remove('hidden');
         }
-
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !suggestionBox.contains(e.target)) {
-                suggestionBox.classList.add('hidden');
-            }
-        });
 
         loadCloudDatabase();
     </script>
