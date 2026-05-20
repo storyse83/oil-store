@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>엔진오일 제원 실시간 검색 시스템</title>
+    <!-- Tailwind CSS 제공 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { -webkit-overflow-scrolling: touch; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen pb-12">
+
+    <!-- 상단 헤더 -->
+    <header class="bg-white shadow-sm border-b border-gray-200 mb-8 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-600 flex items-center space-x-1">
+                <span>🚗</span> <span>국산차 통합 오일 제원 가이드</span>
+            </h1>
+            <span id="dbStatus" class="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">구글 클라우드 DB 연결 중...</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+        
+        <!-- 통합 검색창 -->
+        <div class="relative mb-8">
+            <div class="flex items-center bg-white border-2 border-blue-500 rounded-2xl shadow-md overflow-hidden focus-within:ring-4 focus-within:ring-blue-100 transition-all">
+                <span class="pl-4 text-gray-400 text-xl">🔍</span>
+                <input type="text" id="searchInput" placeholder="구글 스프레드시트 로딩 중..." disabled 
+                       class="w-full p-4 text-base sm:text-lg focus:outline-none placeholder-gray-400 font-medium bg-gray-50">
+            </div>
+
+            <!-- 실시간 검색 자동완성 리스트 -->
+            <div id="suggestionBox" class="absolute w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 hidden max-h-72 overflow-y-auto"></div>
+        </div>
+
+        <!-- 결과 출력 구역 (기본 숨김) -->
+        <div id="resultSection" class="hidden space-y-6">
+            
+            <!-- 차량 마스터 헤더 -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-2xl shadow-lg">
+                <div class="flex items-center space-x-2">
+                    <span id="resBrand" class="bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded">제조사</span>
+                    <span id="resYear" class="bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded">연식</span>
+                </div>
+                <h3 id="resVehicleName" class="text-2xl font-bold mt-2">차량 모델명</h3>
+                <p id="resEngineType" class="text-blue-100 mt-1 text-sm font-medium">엔진 세부 형식</p>
+            </div>
+
+            <!-- 제원 3단 분할 레이아웃 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                
+                <!-- 엔진오일 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-amber-600 font-bold mb-4 border-b pb-2">
+                            <span class="text-xl">🛢️</span> <h4 class="text-base">엔진 오일</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">순정 규정 용량</span>
+                                <span id="resOilCap" class="text-lg font-black text-gray-800">0.0 L</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">추천 점도 및 승인 규격</span>
+                                <span id="resOilVis" class="text-sm font-bold text-gray-700 block leading-relaxed">0W-00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 부동액 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-emerald-600 font-bold mb-4 border-b pb-2">
+                            <span>🧪</span> <h4 class="text-base">부동액 / 냉각수</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">냉각계통 전체 용량</span>
+                                <span id="resCoolantCap" class="text-lg font-black text-gray-800">0.0 L</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">추천 순정 규격</span>
+                                <span id="resCoolantType" class="text-sm font-bold text-gray-700 block leading-relaxed">지정 부동액</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 브레이크액 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-rose-600 font-bold mb-4 border-b pb-2">
+                            <span>🛑</span> <h4 class="text-base">브레이크 액</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">정비 소요 예상 용량</span>
+                                <span id="resBrakeCap" class="text-lg font-black text-gray-800">0.0 L</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-400 block font-medium">추천 규격</span>
+                                <span id="resBrakeCapType" class="text-sm font-bold text-gray-700 block">DOT-4 표준 등급</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 하단 주의사항 안내 -->
+            <div class="bg-gray-100 p-4 rounded-xl text-xs text-gray-500 leading-relaxed shadow-inner">
+                ⚠️ 본 제원 데이터는 제조사 공식 매뉴얼을 기반으로 작성되었습니다. 정비소의 잔유 제거 장비 사용 유무나 단순 자유 낙하 배유 등 작업 커스텀 환경에 따라 실제 오일 주입량은 0.5L 전후의 편차가 생길 수 있으므로, 최종 주입 시에는 항상 딥스틱 게이지 레벨(F-L)을 교차 확인하십시오.
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // 유저님의 실제 구글 시트 ID와 '시트1' 전용 주소 연동 완료
+        const SHEET_ID = '1L_pyYD0o4CuCRsD4XY9qYXhSolDRP910ru0sscbEoOc'; 
+        const SHEET_TITLE = '시트1';
+        
+        // 깃허브 페이지 보안을 우회하여 구글 시트의 데이터를 원활하게 가져오는 JSON 엔드포인트입니다.
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TITLE)}`;
+
+        let domesticVehicles = [];
+
+        const searchInput = document.getElementById('searchInput');
+        const suggestionBox = document.getElementById('suggestionBox');
+        const resultSection = document.getElementById('resultSection');
+        const dbStatus = document.getElementById('dbStatus');
+
+        // 실시간 클라우드 데이터 파싱 엔진
+        async function loadCloudDatabase() {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                
+                const text = await response.text();
+                const jsonData = JSON.parse(text.substring(47, text.length - 2));
+                const rows = jsonData.table.rows;
+                const cols = jsonData.table.cols.map(c => c.label ? c.label.trim() : "");
+
+                domesticVehicles = rows.map(row => {
+                    let car = {};
+                    row.c.forEach((cell, i) => {
+                        const key = cols[i];
+                        if (key) {
+                            car[key] = cell ? (cell.v ?? "") : "";
+                        }
+                    });
+                    return car;
+                });
+
+                // 성공 시 인풋창 활성화
+                dbStatus.innerText = `🟢 동기화 완료 (총 ${domesticVehicles.length}대 제원 보유)`;
+                dbStatus.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm";
+                searchInput.disabled = false;
+                searchInput.placeholder = "차종, 연식, 엔진 명칭을 검색하세요 (예: 아반떼, 쏘렌토 MQ4)...";
+                searchInput.classList.remove('bg-gray-50');
+
+            } catch (error) {
+                console.error(error);
+                dbStatus.innerText = "🔴 서버 연결 실패 (구글 시트의 [공유] 상태를 확인하세요)";
+                dbStatus.className = "bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full";
+            }
+        }
+
+        // 다중 조건 라이브 필터 검색 엔진
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            suggestionBox.innerHTML = '';
+
+            if (!query) {
+                suggestionBox.classList.add('hidden');
+                return;
+            }
+
+            const filtered = domesticVehicles.filter(car => 
+                (car.name && car.name.toString().toLowerCase().includes(query)) || 
+                (car.engine && car.engine.toString().toLowerCase().includes(query)) ||
+                (car.brand && car.brand.toString().toLowerCase().includes(query)) ||
+                (car.year && car.year.toString().toLowerCase().includes(query))
+            );
+
+            if (filtered.length === 0) {
+                suggestionBox.innerHTML = `<div class="p-4 text-sm text-gray-400 text-center">매칭되는 차종이 없습니다.</div>`;
+                suggestionBox.classList.remove('hidden');
+                return;
+            }
+
+            filtered.forEach(car => {
+                const item = document.createElement('div');
+                item.className = "p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer flex justify-between items-center transition-colors";
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center space-x-1.5 mb-1">
+                            <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">${car.brand || '국산'}</span>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${car.year || '연식'}</span>
+                        </div>
+                        <span class="text-base font-bold text-gray-800">${car.name || '차량명'}</span>
+                        <p class="text-xs text-gray-500 mt-1 font-medium">⚡ ${car.engine || ''}</p>
+                    </div>
+                    <span class="text-blue-500 font-bold text-sm">선택 ➔</span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    showSpecificationDetails(car);
+                    searchInput.value = `${car.name} (${car.year})`;
+                    suggestionBox.classList.add('hidden');
+                });
+                suggestionBox.appendChild(item);
+            });
+            suggestionBox.classList.remove('hidden');
+        });
+
+        // 결과 화면 매칭 출력
+        function showSpecificationDetails(car) {
+            document.getElementById('resBrand').innerText = car.brand || '-';
+            document.getElementById('resYear').innerText = car.year || '-';
+            document.getElementById('resVehicleName').innerText = car.name || '-';
+            document.getElementById('resEngineType').innerText = car.engine || '-';
+            document.getElementById('resOilCap').innerText = car.oilCap || '-';
+            document.getElementById('resOilVis').innerText = car.oilVis || '-';
+            document.getElementById('resCoolantCap').innerText = car.coolantCap || '-';
+            document.getElementById('resCoolantType').innerText = car.coolantType || '지정 순정 냉각수';
+            document.getElementById('resBrakeCap').innerText = car.brakeCap || '-';
+            resultSection.classList.remove('hidden');
+        }
+
+        // 외부 영역 클릭 시 드롭다운 상자 닫기
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+                suggestionBox.classList.add('hidden');
+            }
+        });
+
+        // 데이터베이스 수집 가동
+        loadCloudDatabase();
+    </script>
+</body>
+</html>
